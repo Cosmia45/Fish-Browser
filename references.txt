@@ -1,1 +1,4 @@
 https://github.com/dbouquin/IS_608/blob/master/NanosatDB_munging/Countries-Continents.csv
+seriouslyfish.com
+Nokogiri
+Mechanize
