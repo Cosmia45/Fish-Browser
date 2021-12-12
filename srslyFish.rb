@@ -89,7 +89,10 @@ def fishBrowse(dbObj, pageLink, countryList, id)
         end
     end
     # get url of the fish's first picture on their page
-    picture = fishPage.xpath("//div[@class='sidebar_pic']/a")[0]["href"]
+    picture = fishPage.xpath("//div[@class='sidebar_pic']/a")[0]
+    if picture != nil
+        picture = picture["href"]
+    end
     maxSizePath = fishPage.xpath("//h2[@class='profile_maxstandardlength']")[0]
     maxSize = nil
     if maxSizePath != nil
@@ -109,8 +112,8 @@ def fishBrowse(dbObj, pageLink, countryList, id)
     continent = regionSelect.execute(fishCountry[0])
     continent = continent.first["regionID"]
     # there may be some edge cases where a fish might be found on multiple continents, but for now we won't worry about it
-    fishStatement = dbObj.prepare("insert ignore into Fish (fishID,sName,cName,maxSize,temperature,pH,hardness,regionID,picture,link) values (?,?,?,?,?,?,?,?,?,?)")
-    fishStatement.execute(id,fullSci,commonName,maxSize,temp,pH,hardness,continent,picture,pageLink)
+    fishStatement = dbObj.prepare("insert ignore into Fish (fishID,sName,cName,maxSize,tankSize,temperature,pH,hardness,regionID,picture,link) values (?,?,?,?,?,?,?,?,?,?,?)")
+    fishStatement.execute(id,fullSci,commonName,maxSize,tankSize,temp,pH,hardness,continent,picture,pageLink)
     fishCountry.each do |country|
         countryID = dbObj.query("select countryID from countries where countryName = '#{country}'")
         if countryID.count > 0
@@ -170,7 +173,8 @@ agent = Mechanize.new
 CSV.foreach(countryFiles, {:headers=>:first_row}) do |row|
     countries << row[1]
 end
-count = 0 # update value with latest id
+id = 106 # update value with latest id
+count = 0
 categories.each do |fish|
     puts fish
     agent.get("https://www.seriouslyfish.com/knowledge-base/")
@@ -178,7 +182,12 @@ categories.each do |fish|
     hasNext = true
     while hasNext
         agent.page.xpath("//h1[@class='profile_title']/a").each do |pageLink|
-            fishBrowse(dbObj,pageLink["href"],countries, count)
+            if count < id
+                count += 1
+                next
+            end
+            fishBrowse(dbObj,pageLink["href"],countries, id)
+            id += 1
             count += 1
         end
         if agent.page.link_with(:text => "Next") != nil
