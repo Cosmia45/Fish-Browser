@@ -32,6 +32,12 @@ def fishBrowse(dbObj, pageLink, countryList, id)
         else
             fullSci = sciName[0].text
         end
+    elsif sciName.length == 0
+        if fishPage.xpath("//h1/i").length() > 0
+            fullSci = fishPage.xpath("//h1/i").text
+        else 
+            fullSci = nil
+        end
     else
         fullSci = sciName[0].text + " " + sciName[1].text
     end
@@ -47,7 +53,9 @@ def fishBrowse(dbObj, pageLink, countryList, id)
     disText = ""
     # Check the distribution section and get all the text from it
     while dist
-        if distNode.next_element.text == "Habitat" || distNode.next_element.text == "Maximum Standard Length" || distNode.next_element.text == "Sexual Dimorphism"
+        if distNode == nil
+            dist = false
+        elsif distNode.next_element.text == "Habitat" || distNode.next_element.text == "Maximum Standard Length" || distNode.next_element.text == "Sexual Dimorphism"
             dist = false
         else
             disText += distNode.next_element.text + " "
@@ -110,7 +118,11 @@ def fishBrowse(dbObj, pageLink, countryList, id)
     end
     regionSelect = dbObj.prepare("select regionID from countries where countryName = ?")
     continent = regionSelect.execute(fishCountry[0])
-    continent = continent.first["regionID"]
+    if continent.first != nil
+        continent = continent.first["regionID"]
+    else
+        continent = nil
+    end
     # there may be some edge cases where a fish might be found on multiple continents, but for now we won't worry about it
     fishStatement = dbObj.prepare("insert ignore into Fish (fishID,sName,cName,maxSize,tankSize,temperature,pH,hardness,regionID,picture,link) values (?,?,?,?,?,?,?,?,?,?,?)")
     fishStatement.execute(id,fullSci,commonName,maxSize,tankSize,temp,pH,hardness,continent,picture,pageLink)
@@ -173,7 +185,7 @@ agent = Mechanize.new
 CSV.foreach(countryFiles, {:headers=>:first_row}) do |row|
     countries << row[1]
 end
-id = 106 # update value with latest id
+id = 235 # update value with latest id if it stopped working previously
 count = 0
 categories.each do |fish|
     puts fish
