@@ -16,8 +16,8 @@ idCount = 0
 
 CSV.foreach(countryFiles, {:headers=>:first_row}) do |row|
     statement = dbObj.prepare("select regionID from regions where regionName = ?")
-    bloop = statement.execute(row[0])
-    continent = bloop.first["regionID"]
+    regionID = statement.execute(row[0])
+    continent = regionID.first["regionID"]
     statement2 = dbObj.prepare("insert ignore into countries (countryID, regionID, countryName) values (?,?,?)")
     statement2.execute(idCount,continent,row[1])
     idCount += 1
